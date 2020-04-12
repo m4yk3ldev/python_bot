@@ -34,8 +34,6 @@ def start(update, context):
     /reportar_viseras - Notificar cantidad de viseras hechas
     /entregar_viseras - Notificar cantidad de viseras entregadas
     /resumen - Resúmen de las viseras y material entregado
-    
-    
     """
     update.message.reply_text(text)
 
