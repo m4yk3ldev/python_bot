@@ -134,3 +134,6 @@ dmypy.json
 .idea
 .ojo
 .vscode
+
+#Mis CONFG
+cfg.py
