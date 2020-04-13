@@ -16,7 +16,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-REGISTER3D = range(1)
+INFOUSER, PRINTER3D, MATERIALES = range(3)
 
 
 def start(update, context):
@@ -24,6 +24,7 @@ def start(update, context):
     Listado de comando a usar:
     /info - Propocito del bot
     /registrar3d - Homologo de las preguntas de lista de  https://bit.ly/cuba-3dprinters 
+    /cancelar - Cancela el proceso de registro 
     /registrar_cnc - Registrar el CNC
     /recibir_pla - Notificar recepcion de filamento PLA
     /recibir_petg - Notificar recepcion de filamento PETG
@@ -46,11 +47,8 @@ def info(update, context):
 def registar3d(update, context):
     logger.info(f"El usuario {update.message.from_user.username} pide registar")
     user = update.message.from_user
-    us = db.User()
-    us.id = user.id
-    us.username = user.username
-    db.AddUser(us)
 
+def
 
 # Cancelar el registro
 def cancel(update, context):
@@ -72,10 +70,10 @@ def main():
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler('registrar3d', registar3d)],
 
         states={
-            REGISTER3D: [MessageHandler(Filters.text, registar3d)]
+            INFOUSER: [MessageHandler(Filters.text, registar3d)]
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
@@ -96,6 +94,5 @@ def main():
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
-
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+        main()

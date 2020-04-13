@@ -137,3 +137,6 @@ dmypy.json
 
 #Mis CONFG
 cfg
+db.sqlite
+.ojo
+ojo.json

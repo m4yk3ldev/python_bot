@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
@@ -11,6 +11,10 @@ class User(Base):
 
     id = Column('id', Integer, primary_key=True)
     username = Column('username', String, unique=True)
+    correo = Column('correo', String, unique=True)
+    telefono = Column('telefono', String, unique=True)
+    provincia = Column('prov', String)
+    is_3d = Column('is_3d', Boolean)
 
 
 # Crear conexion
@@ -24,6 +28,13 @@ session = Session()
 def AddUser(user):
     try:
         session.add(user)
-        session.commit()
     except ValueError:
         pass
+
+
+def Salvar():
+    session.commit()
+
+
+def CerrarConexion():
+    session.close()
