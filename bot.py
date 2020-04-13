@@ -48,7 +48,9 @@ def registar3d(update, context):
     logger.info(f"El usuario {update.message.from_user.username} pide registar")
     user = update.message.from_user
 
+
 def
+
 
 # Cancelar el registro
 def cancel(update, context):
