@@ -136,7 +136,6 @@ dmypy.json
 .vscode
 
 #Mis CONFG
-cfg
 db.sqlite
 .ojo
 ojo.json
