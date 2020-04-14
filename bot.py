@@ -16,7 +16,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-INFOUSER, PRINTER3D, MATERIALES = range(3)
+user = db.User()
+
+# Para registar el usuario
+REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D = range(6)
 
 
 def start(update, context):
@@ -37,6 +40,7 @@ def start(update, context):
     /resumen - Resúmen de las viseras y material entregado
     """
     update.message.reply_text(text)
+    user.setUsername(update.message.from_user.username)
 
 
 def info(update, context):
@@ -44,18 +48,97 @@ def info(update, context):
     update.message.reply_text("Este bot facilita la gestion de impresionn 3D")
 
 
+# Empezar el registar
 def registar3d(update, context):
     logger.info(f"El usuario {update.message.from_user.username} pide registar")
-    user = update.message.from_user
+    update.message.reply_text("Por favor introduzca el correo")
+    return REGISTEREMAIL
 
 
-def
+# Registar los email
+def registeremail(update, context):
+    email = str(update.message.text)
+    update.message.reply_text(f"Registrado el correo {email}")
+    user.setCorreo(email)
+    update.message.reply_text("Por favor inserte su # de telefono , si no lo deseas /skip para pasar")
+    return TELEFONO
+
+
+def skip_phone(update, context):
+    reply_keyboard = [
+        ['Pinar del Río',
+         'Artemisa',
+         'Mayabeque',
+         'Matanzas',
+         'Cienfuegos',
+         'Villa Clara',
+         'Sancti Spiritus',
+         'Ciego de Ávila',
+         'Camagüey',
+         'Holguín',
+         'Granma',
+         'Santiago de Cuba',
+         'Guantánamo',
+         'Isla de la Juventud',
+         'Habana',
+         ]
+    ]
+    update.message.reply_text("Cual es su provincia?", resize_keyboard=True,
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard))
+    return PROVINCIA
+
+
+# Registar el telefono
+def registrarphone(update, context):
+    telefono = str(update.message.text)
+    user.setTelefono(telefono)
+
+    reply_keyboard = [
+        ['Pinar del Río',
+         'Artemisa',
+         'Mayabeque',
+         'Matanzas',
+         'Cienfuegos',
+         'Villa Clara',
+         'Sancti Spiritus',
+         'Ciego de Ávila',
+         'Camagüey',
+         'Holguín',
+         'Granma',
+         'Santiago de Cuba',
+         'Guantánamo',
+         'Isla de la Juventud',
+         'Habana',
+         ]
+    ]
+    update.message.reply_text("Cual es su provincia?", resize_keyboard=True,
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard))
+    return PROVINCIA
+
+
+# Registar la provincia
+def registarProvincia(update, context):
+    provincia = str(update.message.text)
+    user.setProvincia(provincia)
+    update.message.reply_text(f"Provincia actualizada {provincia}")
+    reply_keyboard = [['Si', 'No', ]]
+    update.message.reply_text("Tienes impresora?",
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard))
+    return IS_PRINTER3D
+
+
+# Register si Printer3d
+def registar_isPrinter3D(update, context):
+    is_printer = (update.message.text == "Si")
+    if is_printer:
+        return YES_IS_PRINTER3D
+    else:
+        return NO_IS_PRINTER3D
 
 
 # Cancelar el registro
 def cancel(update, context):
-    user = update.message.from_user
-    logger.info("User %s canceled the conversation.", user.first_name)
+    logger.info("User %s canceled the conversation.", user.username)
     update.message.reply_text('Cancelada el registro')
     return ConversationHandler.END
 
@@ -70,19 +153,23 @@ def main():
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
-
+    dp.add_handler(CommandHandler("start", start))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('registrar3d', registar3d)],
 
         states={
-            INFOUSER: [MessageHandler(Filters.text, registar3d)]
+            REGISTEREMAIL: [MessageHandler(Filters.text, registeremail)],
+            TELEFONO: [MessageHandler(Filters.text, registrarphone),
+                       CommandHandler('skip', skip_phone)],
+            PROVINCIA: [MessageHandler(Filters.text, registarProvincia)],
+            IS_PRINTER3D: [MessageHandler(Filters.regex('^(Si|No)$'), registar_isPrinter3D)],
         },
 
-        fallbacks=[CommandHandler('cancel', cancel)]
-    )
+        fallbacks=[CommandHandler('cancelar', cancel)]
 
-    dp.add_handler(CommandHandler("info", info))
+    )
     dp.add_handler(conv_handler)
+    dp.add_handler(CommandHandler("info", info))
 
     # log all errors
     # dp.add_error_handler(error)
@@ -96,5 +183,6 @@ def main():
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
-    if __name__ == '__main__':
-        main()
+
+if __name__ == '__main__':
+    main()
