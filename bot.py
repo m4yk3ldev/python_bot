@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 user = db.User()
 
 # Para registar el usuario
-REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D = range(6)
+REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D, CANT_FDM = range(7)
 
 
 def start(update, context):
@@ -134,6 +134,19 @@ def registar_isPrinter3D(update, context):
         return YES_IS_PRINTER3D
     else:
         return NO_IS_PRINTER3D
+
+
+def register_yes_isPrinted3D(update, context):
+    update.message.reply_text(
+        "El objetivo es determinar la capacidad fuerza de trabajo en maquinaria total disponible"
+        " que puede ser destinada a estos fines. \n\n"
+        "¿De cuántas impresoras FDM dispone? ")
+    return CANT_FDM
+
+
+# FDM disponible
+def register_FDM(update, context):
+    cant_fdm = int(update.message.text)
 
 
 # Cancelar el registro
