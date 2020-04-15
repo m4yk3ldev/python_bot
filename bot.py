@@ -1,9 +1,11 @@
 import logging
-import cfg
-import db
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
+
+from telegram import (ReplyKeyboardMarkup)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
+
+import cfg
+import db
 
 # Enable logging
 logging.basicConfig(
