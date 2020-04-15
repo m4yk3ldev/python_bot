@@ -167,6 +167,8 @@ def registerMaterialCNC(update, context):
     logger.info(f" {user.username}  accedio a register_CNC")
     material = str(update.message.text)
     user.setMaterialesCNC(material)
+    db.AddUser(user)
+    db.Salvar()
     return RESERVA
 
 
@@ -235,6 +237,7 @@ def main():
             CANT_SLA_DLP: [MessageHandler(Filters.text, registarCant_SLA_DLP)],
             IS_CNC: [MessageHandler(Filters.regex('^(Si|No)$'), register_isCNC)],
             CNC: [MessageHandler(Filters.text, register_CNC)],
+            MATERIAL_CNC: [MessageHandler(Filters.text, registerMaterialCNC)],
         },
 
         fallbacks=[CommandHandler('cancelar', cancel)]
