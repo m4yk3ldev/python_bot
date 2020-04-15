@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# This program is dedicated to the public domain under the CC0 license.
-
 import logging
 import cfg
 import db
@@ -10,12 +6,14 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
 
 # Enable logging
-logging.basicConfig(format=' ######### %(asctime)s - %(name)s - %(levelname)s - %(message)s #########',
-                    level=logging.INFO)
+logging.basicConfig(
+    format=' ######### %(asctime)s - %(name)s - %(levelname)s - %(message)s #########',
+    level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
 user = db.User()
+
 provincias = [
     ['Pinar del Río',
      'Artemisa'],
@@ -43,8 +41,8 @@ def start(update, context):
     text = """
     Listado de comando a usar:
     /info - Propocito del bot
-    /registrar3d - Homologo de las preguntas de lista de  https://bit.ly/cuba-3dprinters 
-    /cancelar - Cancela el proceso de registro 
+    /registrar3d - Homologo de las preguntas de lista de  https://bit.ly/cuba-3dprinters
+    /cancelar - Cancela el proceso de registro
     /registrar_cnc - Registrar el CNC
     /recibir_pla - Notificar recepcion de filamento PLA
     /recibir_petg - Notificar recepcion de filamento PETG
@@ -63,7 +61,8 @@ def start(update, context):
 
 
 def info(update, context):
-    logger.info(f"El usuario {update.message.from_user.username} consulto la informacion")
+    logger.info(
+        f"El usuario {update.message.from_user.username} consulto la informacion")
     if user.username is None:
         user.setUsername(update.message.from_user.username)
     update.message.reply_text("Este bot facilita la gestion de impresionn 3D")
@@ -84,14 +83,18 @@ def registeremail(update, context):
     email = str(update.message.text)
     update.message.reply_text(f"Registrado el correo {email}")
     user.setCorreo(email)
-    update.message.reply_text("Por favor inserte su # de telefono , si no lo deseas /skip para pasar")
+    update.message.reply_text(
+        "Por favor inserte su # de telefono , si no lo deseas /skip para pasar")
     return TELEFONO
 
 
 def skip_phone(update, context):
     logger.info(f" {user.username}  accedio a skip_phone")
-    update.message.reply_text("Cual es su provincia?", resize_keyboard=True,
-                              reply_markup=ReplyKeyboardMarkup(provincias), one_time_keyboard=True)
+    update.message.reply_text(
+        "Cual es su provincia?",
+        resize_keyboard=True,
+        reply_markup=ReplyKeyboardMarkup(provincias),
+        one_time_keyboard=True)
     return PROVINCIA
 
 
@@ -106,8 +109,11 @@ def registrarphone(update, context):
         update.message.reply_text('Gracias')
         user.setTelefono(telefono)
 
-    update.message.reply_text("Cuál es su provincia?", resize_keyboard=True,
-                              reply_markup=ReplyKeyboardMarkup(provincias), one_time_keyboard=True)
+    update.message.reply_text(
+        "Cuál es su provincia?",
+        resize_keyboard=True,
+        reply_markup=ReplyKeyboardMarkup(provincias),
+        one_time_keyboard=True)
     return PROVINCIA
 
 
@@ -118,8 +124,10 @@ def registarProvincia(update, context):
     user.setProvincia(provincia)
     update.message.reply_text(f"Provincia actualizada {provincia}")
     reply_keyboard = [['Si', 'No', ]]
-    update.message.reply_text("Tienes impresora?",
-                              reply_markup=ReplyKeyboardMarkup(reply_keyboard), one_time_keyboard=True)
+    update.message.reply_text(
+        "Tienes impresora?",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard),
+        one_time_keyboard=True)
     return IS_PRINTER3D
 
 
@@ -158,7 +166,8 @@ def register_CNC(update, context):
     try:
         cant = int(update.message.text)
         user.setCantCNC(cant)
-        update.message.reply_text("¿Con qué materiales puede trabajar su máquina herramienta CNC?")
+        update.message.reply_text(
+            "¿Con qué materiales puede trabajar su máquina herramienta CNC?")
         return MATERIAL_CNC
     except ValueError:
         update.message.reply_text("Debe de introducir un numero")
