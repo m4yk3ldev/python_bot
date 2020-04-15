@@ -16,22 +16,24 @@ logging.basicConfig(format=' ######### %(asctime)s - %(name)s - %(levelname)s - 
 logger = logging.getLogger(__name__)
 
 user = db.User()
-provincias = ['Pr',
-              'Art',
-              'Myb',
-              'Mtz',
-              'Cfg',
-              'Vlc',
-              'Ss',
-              'Cav',
-              'Cmg',
-              'Hlg',
-              'Grm',
-              'SC',
-              'Gtm',
-              'IJ',
-              'Hab',
-              ]
+provincias = [
+    ['Pinar del Río',
+     'Artemisa'],
+    ['Mayabeque',
+     'Matanzas'],
+    ['Cienfuegos',
+     'Villa Clara'],
+    ['Sancti Spiritus',
+     'Ciego de Ávila'],
+    ['Camagüey',
+     'Las Tunas'],
+    ['Holguín',
+     'Granma'],
+    ['Santiago de Cuba',
+     'Guantánamo'],
+    ['Isla de la Juventud',
+     'Habana'],
+]
 # Para registar el usuario
 REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D, CANT_FDM, DIAMETROFILAMENTO, CANT_SLA_DLP, IS_CNC, CNC, RESERVA, MATERIAL_CNC = range(
     13)
@@ -88,11 +90,8 @@ def registeremail(update, context):
 
 def skip_phone(update, context):
     logger.info(f" {user.username}  accedio a skip_phone")
-    reply_keyboard = [
-        provincias
-    ]
     update.message.reply_text("Cual es su provincia?", resize_keyboard=True,
-                              reply_markup=ReplyKeyboardMarkup(reply_keyboard), one_time_keyboard=True)
+                              reply_markup=ReplyKeyboardMarkup(provincias), one_time_keyboard=True)
     return PROVINCIA
 
 
@@ -100,13 +99,15 @@ def skip_phone(update, context):
 def registrarphone(update, context):
     logger.info(f" {user.username}  accedio a registerphone")
     telefono = str(update.message.text)
-    user.setTelefono(telefono)
+    logger.info(f"{telefono}")
+    if telefono == "/skip":
+        update.message.reply_text("Bueno despues puede poner el # si desea")
+    else:
+        update.message.reply_text('Gracias')
+        user.setTelefono(telefono)
 
-    reply_keyboard = [
-        provincias
-    ]
-    update.message.reply_text("Cual es su provincia?", resize_keyboard=True,
-                              reply_markup=ReplyKeyboardMarkup(reply_keyboard), one_time_keyboard=True)
+    update.message.reply_text("Cuál es su provincia?", resize_keyboard=True,
+                              reply_markup=ReplyKeyboardMarkup(provincias), one_time_keyboard=True)
     return PROVINCIA
 
 
