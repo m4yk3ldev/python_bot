@@ -1,6 +1,6 @@
 import logging
 
-from telegram import (ReplyKeyboardMarkup)
+from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
 
@@ -44,7 +44,7 @@ def start(update, context):
     Listado de comando a usar:
     /info - Propocito del bot
     /registrar3d - Homologo de las preguntas de lista de  https://bit.ly/cuba-3dprinters
-    /cancelar - Cancela el proceso de registro
+    /cancel - Cancela el proceso de registro
     /registrar_cnc - Registrar el CNC
     /recibir_pla - Notificar recepcion de filamento PLA
     /recibir_petg - Notificar recepcion de filamento PETG
@@ -59,6 +59,9 @@ def start(update, context):
     update.message.reply_text(text)
     if user.username is None:
         user.setUsername(update.message.from_user.username)
+        user.setID(update.message.from_user.id)
+        db.AddUser(user)
+        db.Salvar()
     logger.info(f" {user.username} a iniciado el bot")
 
 
@@ -67,7 +70,10 @@ def info(update, context):
         f"El usuario {update.message.from_user.username} consulto la informacion")
     if user.username is None:
         user.setUsername(update.message.from_user.username)
-    update.message.reply_text("Este bot facilita la gestion de impresionn 3D")
+        user.setID(update.message.from_user.id)
+        db.AddUser(user)
+        db.Salvar()
+    update.message.reply_text("Este bot facilita la gestion de impresionn 3D", reply_markup=ReplyKeyboardRemove())
 
 
 # Empezar el registar
@@ -75,7 +81,8 @@ def registar3d(update, context):
     if user.username is None:
         user.setUsername(update.message.from_user.username)
     logger.info(f"El usuario {user.username} pide registar")
-    update.message.reply_text("Por favor introduzca el correo")
+    update.message.reply_text("Por favor introduzca el correo",
+                              reply_markup=ReplyKeyboardRemove())
     return REGISTEREMAIL
 
 
@@ -83,10 +90,10 @@ def registar3d(update, context):
 def registeremail(update, context):
     logger.info(f" {user.username}  accedio a registeremail")
     email = str(update.message.text)
-    update.message.reply_text(f"Registrado el correo {email}")
     user.setCorreo(email)
+    db.Salvar()
     update.message.reply_text(
-        "Por favor inserte su # de telefono , si no lo deseas /skip para pasar")
+        "Por favor inserte su # de telefono , si no lo deseas /skip para pasar", reply_markup=ReplyKeyboardRemove())
     return TELEFONO
 
 
@@ -104,12 +111,12 @@ def skip_phone(update, context):
 def registrarphone(update, context):
     logger.info(f" {user.username}  accedio a registerphone")
     telefono = str(update.message.text)
-    logger.info(f"{telefono}")
     if telefono == "/skip":
         update.message.reply_text("Bueno despues puede poner el # si desea")
     else:
         update.message.reply_text('Gracias')
         user.setTelefono(telefono)
+        db.Salvar()
 
     update.message.reply_text(
         "Cuál es su provincia?",
@@ -124,7 +131,8 @@ def registarProvincia(update, context):
     logger.info(f" {user.username}  accedio a registerProvincia")
     provincia = str(update.message.text)
     user.setProvincia(provincia)
-    update.message.reply_text(f"Provincia actualizada {provincia}")
+    db.Salvar()
+    update.message.reply_text(f"Provincia actualizada {provincia}", reply_markup=ReplyKeyboardRemove())
     reply_keyboard = [['Si', 'No', ]]
     update.message.reply_text(
         "Tienes impresora?",
@@ -139,25 +147,31 @@ def registar_isPrinter3D(update, context):
     is_printer = (update.message.text == "Si")
     if is_printer:
         user.setIs3D()
+        db.Salvar()
         update.message.reply_text(
             "El objetivo es determinar la capacidad fuerza de trabajo en maquinaria total disponible"
             " que puede ser destinada a estos fines. \n\n"
-            "¿De cuántas impresoras FDM dispone? ")
+            "¿De cuántas impresoras FDM dispone? ", reply_markup=ReplyKeyboardRemove())
         return CANT_FDM
     else:
-        update.message.reply_text("Tienes herramientas CNC?")
+        reply_keyboard = [['Si', 'No', ]]
+        update.message.reply_text("Tienes herramientas CNC?",
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard),
+                                  one_time_keyboard=True
+                                  )
         return IS_CNC
 
 
 def register_isCNC(update, context):
     logger.info(f" {user.username}  accedio a register_isCNC")
     is_cnc = (update.message.text == "Si")
-    user.setIsCNC()
     if is_cnc is True:
+        user.setIsCNC()
+        db.Salvar()
         update.message.reply_text(
             "El objetivo es determinar la capacidad fuerza de trabajo en maquinaria total disponible que puede ser "
             "destinada a estos fines./n "
-            "¿De cuántas máquinas CNC dispone?")
+            "¿De cuántas máquinas CNC dispone?", reply_markup=ReplyKeyboardRemove())
         return CNC
     else:
         return RESERVA
@@ -168,8 +182,10 @@ def register_CNC(update, context):
     try:
         cant = int(update.message.text)
         user.setCantCNC(cant)
+        db.Salvar()
         update.message.reply_text(
-            "¿Con qué materiales puede trabajar su máquina herramienta CNC?")
+            "¿Con qué materiales puede trabajar su máquina herramienta CNC? "
+            "Ejemplo: Acrílico, Madera, PVC ")
         return MATERIAL_CNC
     except ValueError:
         update.message.reply_text("Debe de introducir un numero")
@@ -179,8 +195,12 @@ def registerMaterialCNC(update, context):
     logger.info(f" {user.username}  accedio a register_CNC")
     material = str(update.message.text)
     user.setMaterialesCNC(material)
-    db.AddUser(user)
     db.Salvar()
+    update.message.reply_text(
+        "Reservas de material para tomar decisiones y priorizar objetivos de impresión."
+        "/n/n"
+        "¿De cuántos kg de filamento PLA para impresión dispone?"
+    )
     return RESERVA
 
 
@@ -190,6 +210,7 @@ def register_FDM(update, context):
     try:
         cant_fdm = int(update.message.text)
         user.setCantFDM(cant_fdm)
+        db.Salvar()
         update.message.reply_text(
             "¿Qué diámetros de filamento plástico puede utilizar su impresora? \n"
             " Ejemplo : 1.75 mm, 2.85mm")
@@ -202,6 +223,7 @@ def registarDiametroFilamento(update, context):
     logger.info(f" {user.username}  accedio a registarDiametroFilamento")
     dia_fila = str(update.message.text)
     user.setDiametroFilamento(dia_fila)
+    db.Salvar()
     update.message.reply_text("¿De cuántas impresoras SLA o DLP dispone?")
     return CANT_SLA_DLP
 
@@ -211,10 +233,26 @@ def registarCant_SLA_DLP(update, context):
     try:
         cant_SLA_DLP = int(update.message.text)
         user.setCantSLA_DLP(cant_SLA_DLP)
-        update.message.reply_text("Tiene herramientas CNC?")
+        db.Salvar()
+        reply_keyboard = [['Si', 'No', ]]
+        update.message.reply_text("Tienes herramientas CNC?",
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard),
+                                  one_time_keyboard=True
+                                  )
         return IS_CNC
     except ValueError:
         update.message.reply_text("Debe de introducir un numero")
+
+
+def registarMateriles(update, context):
+    logger.info(f" {user.username}  accedio a registarMateriles")
+    cant_kg_PLA = int(update.message.text)
+    try:
+        user.setCantPLA(cant_kg_PLA)
+        db.Salvar()
+        update.message.reply_text("¿De cuántos kg de filamento PETG para impresión dispone?")
+    except ValueError:
+        update.message.reply_text("Inserte un número")
 
 
 # Cancelar el registro
@@ -250,16 +288,17 @@ def main():
             IS_CNC: [MessageHandler(Filters.regex('^(Si|No)$'), register_isCNC)],
             CNC: [MessageHandler(Filters.text, register_CNC)],
             MATERIAL_CNC: [MessageHandler(Filters.text, registerMaterialCNC)],
+            RESERVA: [MessageHandler(Filters.text, registarMateriles)],
         },
 
-        fallbacks=[CommandHandler('cancelar', cancel)]
+        fallbacks=[CommandHandler('cancel', cancel)],
 
     )
     dp.add_handler(conv_handler)
     dp.add_handler(CommandHandler("info", info))
 
     # log all errors
-    # dp.add_error_handler(error)
+    dp.add_error_handler(error)
 
     # Start the Bot
     updater.start_polling()
