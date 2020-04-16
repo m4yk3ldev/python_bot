@@ -35,8 +35,8 @@ provincias = [
      'Habana'],
 ]
 # Para registar el usuario
-REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D, CANT_FDM, DIAMETROFILAMENTO, CANT_SLA_DLP, IS_CNC, CNC, RESERVA, MATERIAL_CNC = range(
-    13)
+REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D, CANT_FDM, DIAMETROFILAMENTO, \
+CANT_SLA_DLP, IS_CNC, CNC, RESERVA, MATERIAL_CNC, CANTPETG = range(14)
 
 
 def start(update, context):
@@ -60,8 +60,17 @@ def start(update, context):
     if user.username is None:
         user.setUsername(update.message.from_user.username)
         user.setID(update.message.from_user.id)
+        if not db.isExist(user):
+            db.AddUser(user)
+            db.Salvar()
+        else:
+            db.Eliminar(user)
+            db.Salvar()
+            print(f"Eliminar {user.username}")
+
         db.AddUser(user)
         db.Salvar()
+
     logger.info(f" {user.username} a iniciado el bot")
 
 
@@ -71,7 +80,6 @@ def info(update, context):
     if user.username is None:
         user.setUsername(update.message.from_user.username)
         user.setID(update.message.from_user.id)
-        db.AddUser(user)
         db.Salvar()
     update.message.reply_text("Este bot facilita la gestion de impresionn 3D", reply_markup=ReplyKeyboardRemove())
 
@@ -198,8 +206,8 @@ def registerMaterialCNC(update, context):
     db.Salvar()
     update.message.reply_text(
         "Reservas de material para tomar decisiones y priorizar objetivos de impresión."
-        "/n/n"
-        "¿De cuántos kg de filamento PLA para impresión dispone?"
+        "\n Si deseas insertar los datos despues solo escriba /cancel\n"
+        "¿De cuántos kg de filamento PLA para impresión dispone?", reply_markup=ReplyKeyboardRemove()
     )
     return RESERVA
 
@@ -250,9 +258,23 @@ def registarMateriles(update, context):
     try:
         user.setCantPLA(cant_kg_PLA)
         db.Salvar()
-        update.message.reply_text("¿De cuántos kg de filamento PETG para impresión dispone?")
+        update.message.reply_text("¿De cuántos kg de filamento PETG para impresión dispone?",
+                                  reply_markup=ReplyKeyboardRemove())
     except ValueError:
         update.message.reply_text("Inserte un número")
+
+    return CANTPETG
+
+
+def registarCantPETG(update, context):
+    logger.info(f" {user.username}  accedio a registarCantPETG")
+    petg = int(update.message.text)
+    try:
+        user.setCantPETG(petg)
+        db.Salvar()
+        update.message.reply_text("¿De cuántos kg de filamento ABS para impresión dispone?")
+    except ValueError:
+        update.message.reply_text("Inserte un numero")
 
 
 # Cancelar el registro
@@ -289,6 +311,7 @@ def main():
             CNC: [MessageHandler(Filters.text, register_CNC)],
             MATERIAL_CNC: [MessageHandler(Filters.text, registerMaterialCNC)],
             RESERVA: [MessageHandler(Filters.text, registarMateriles)],
+            CANTPETG: [MessageHandler(Filters.text, registarCantPETG)],
         },
 
         fallbacks=[CommandHandler('cancel', cancel)],
@@ -297,16 +320,11 @@ def main():
     dp.add_handler(conv_handler)
     dp.add_handler(CommandHandler("info", info))
 
-    # log all errors
     dp.add_error_handler(error)
 
-    # Start the Bot
     updater.start_polling()
     print("I live")
 
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
 

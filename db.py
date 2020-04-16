@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import update
 
 Base = declarative_base()
 
@@ -106,6 +107,9 @@ class User(Base):
     def setID(self, id):
         self.id = id
 
+    def getId(self):
+        return self.id
+
 
 # Crear conexion
 engine = create_engine('sqlite:///db.sqlite', echo=True)
@@ -115,11 +119,24 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
+def isExist(user):
+    q = session.query(User).all()
+    for a in q:
+        if a.id == user.id:
+            return True
+    return False
+
+
+def getUser(id):
+    q = session.query(User).all()
+    for a in q:
+        if a.id == id:
+            return a
+    return None
+
+
 def AddUser(user):
-    try:
-        session.add(user)
-    except ValueError:
-        pass
+    session.add(user)
 
 
 def Salvar():
@@ -130,8 +147,4 @@ def CerrarConexion():
     session.close()
 
 
-def get_update_query(table_name, where_vals, update_vals):
-    query = table_name.update()
-    for k, v in where_vals.iteritems():
-        query = query.where(getattr(table_name.c, k) == v)
-    return query.values(**update_vals)
+# TODO revisar el borrar
