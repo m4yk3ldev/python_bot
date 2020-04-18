@@ -139,3 +139,4 @@ dmypy.json
 db.sqlite
 .ojo
 ojo.json
+.venv
