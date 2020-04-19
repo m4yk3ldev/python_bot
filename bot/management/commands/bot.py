@@ -58,14 +58,14 @@ def start(update: Update, context: CallbackContext):
     logger.info(f"El usuario {update.message.from_user.username} consulto start")
     text = """
     Listado de comando a usar:
-    /info - Propocito del bot
+    /info - Propósito del bot
     /registrar3d - Homologo de las preguntas de lista de  https://bit.ly/cuba-3dprinters
     /cancel - Cancela el proceso de registro
     /registrar_cnc - Registrar el CNC
-    /recibir_pla - Notificar recepcion de filamento PLA
-    /recibir_petg - Notificar recepcion de filamento PETG
-    /recibir_abs - Notificar recepcion de filamento ABS
-    /recibir_pvc - Notificar recepcion de filamento PVC
+    /recibir_pla - Notificar recepción de filamento PLA
+    /recibir_petg - Notificar recepción de filamento PETG
+    /recibir_abs - Notificar recepción de filamento ABS
+    /recibir_pvc - Notificar recepción de filamento PVC
     /recibir_pantallas  - Notificar recepción de placas transparentes para viseras
     /recibir_acrilico - Notificar recepción de planchas de acrílico
     /reportar_viseras - Notificar cantidad de viseras hechas
