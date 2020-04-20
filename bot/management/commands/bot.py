@@ -1,15 +1,15 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from django.shortcuts import get_object_or_404
-# Bot Import
+import logging
 
+from django.conf import settings
+from django.core.management.base import BaseCommand
 from telegram import Bot, Update, ReplyKeyboardRemove, ReplyKeyboardMarkup
 from telegram.ext import CallbackContext, Filters, MessageHandler, Updater, CommandHandler, ConversationHandler
 from telegram.utils.request import Request
 
+from bot.management import commands
 from bot.models import Profile
 
-import logging
+# Bot Import
 
 # Enable logging
 logging.basicConfig(
@@ -38,7 +38,7 @@ provincias = [
 ]
 # Para registar el usuario
 REGISTEREMAIL, PROVINCIA, TELEFONO, IS_PRINTER3D, YES_IS_PRINTER3D, NO_IS_PRINTER3D, CANT_FDM, DIAMETROFILAMENTO, \
-CANT_SLA_DLP, IS_CNC, CNC, RESERVA, MATERIAL_CNC, CANTPETG = range(14)
+CANT_SLA_DLP, IS_CNC, CNC, RESERVA, MATERIAL_CNC, CANTPETG, ONLYCNC = range(15)
 
 
 def log_errors(f):
@@ -337,12 +337,17 @@ def registerMaterialCNC(update: Update, context: CallbackContext):
     )
     p.materiales_cnc = material
     p.save()
-    update.message.reply_text(
-        "Reservas de material para tomar decisiones y priorizar objetivos de impresión."
-        "\n Si deseas insertar los datos despues solo escriba /cancel\n"
-        "¿De cuántos kg de filamento PLA para impresión dispone?", reply_markup=ReplyKeyboardRemove()
-    )
-    return RESERVA
+    print(commands.IS_ONLY_CNC)
+    if not commands.IS_ONLY_CNC:
+        update.message.reply_text(
+            "Reservas de material para tomar decisiones y priorizar objetivos de impresión."
+            "\n Si deseas insertar los datos despues solo escriba /cancel\n"
+            "¿De cuántos kg de filamento PLA para impresión dispone?", reply_markup=ReplyKeyboardRemove()
+        )
+        return RESERVA
+    else:
+        update.message.reply_text("Gracias por actualizar su CNC")
+        return ConversationHandler.END
 
 
 # Registar Materiales
@@ -394,6 +399,25 @@ def cancel(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
+def registarCNCOnly(update: Update, context: CallbackContext):
+    logger.info(f"El usuario {update.message.from_user.username} consulto registarCNCOnly")
+    p, _ = Profile.objects.get_or_create(
+        external_id=update.message.from_user.id,
+        defaults={
+            'username': update.message.from_user.username,
+
+        }
+    )
+    p.is_cnc = True
+    p.save()
+    commands.IS_ONLY_CNC = True
+    update.message.reply_text(
+        "El objetivo es determinar la capacidad fuerza de trabajo en maquinaria total disponible que puede ser "
+        "destinada a estos fines./n "
+        "¿De cuántas máquinas CNC dispone?", reply_markup=ReplyKeyboardRemove())
+    return CNC
+
+
 # Iniciacion del comando `bot`
 class Command(BaseCommand):
     help = "PrinterControlBot"
@@ -415,6 +439,8 @@ class Command(BaseCommand):
         dp = update.dispatcher
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CommandHandler("info", info))
+
+        # Registar completp
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('registrar3d', registar3d)],
 
@@ -438,6 +464,20 @@ class Command(BaseCommand):
 
         )
         dp.add_handler(conv_handler)
+
+        # Regsitrar solo CNC
+        registar_CNC_Only = ConversationHandler(
+            entry_points=[CommandHandler('registrar_cnc', registarCNCOnly)],
+
+            states={
+                CNC: [MessageHandler(Filters.text, register_CNC)],
+                MATERIAL_CNC: [MessageHandler(Filters.text, registerMaterialCNC)],
+            },
+
+            fallbacks=[CommandHandler('cancel', cancel)],
+
+        )
+        dp.add_handler(registar_CNC_Only)
         update.start_polling()
         print('I live')
         update.idle()
